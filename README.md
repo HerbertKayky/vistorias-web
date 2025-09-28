@@ -8,8 +8,7 @@ Sistema web para gestão de vistorias veiculares desenvolvido com Next.js, React
 - **Gestão de Vistorias**: Criação, edição e visualização de inspeções veiculares
 - **Checklist Interativo**: Sistema de aprovação/reprovação por item
 - **Gestão de Veículos**: CRUD completo para cadastro de veículos
-- **Relatórios e Gráficos**: Métricas visuais com Chart.js
-- **Exportação CSV**: Download de dados em formato CSV
+- **Relatórios e Gráficos**: Métricas visuais
 - **Interface Responsiva**: Design adaptável para desktop e tablet
 
 ## 🛠️ Tecnologias
@@ -18,9 +17,7 @@ Sistema web para gestão de vistorias veiculares desenvolvido com Next.js, React
 - **React 19** - Biblioteca de interface
 - **TypeScript** - Tipagem estática
 - **TailwindCSS** - Framework CSS utilitário
-- **TanStack Query** - Gerenciamento de estado servidor
 - **Axios** - Cliente HTTP
-- **Chart.js** - Gráficos e visualizações
 - **Lucide React** - Ícones modernos
 
 ## 📦 Instalação
