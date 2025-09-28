@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useApi';
+import { ErrorWithResponse, useAuth } from '@/hooks/useApi';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -66,9 +66,10 @@ export default function CadastroPage() {
     try {
       await register(formData);
       // Sucesso - o hook já redireciona para login
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as ErrorWithResponse;
       setErrors({
-        general: err.response?.data?.message || 'Erro ao criar conta'
+        general: error.response?.data?.message || 'Erro ao criar conta'
       });
     }
   };

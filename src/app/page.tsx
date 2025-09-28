@@ -15,7 +15,7 @@ export default function Home() {
       if (isAuthenticated) {
         router.push('/vistorias');
       } else {
-        router.push('/cadastro');
+        router.push('/login');
       }
     }
   }, [isAuthenticated, isLoading, router]);

@@ -1,71 +1,86 @@
-'use client';
+"use client";
 
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { useInspection, useUpdateInspectionStatus } from '@/hooks/useApi';
-import { 
-  ArrowLeft, 
-  Edit, 
-  CheckCircle, 
-  XCircle, 
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import {
+  ErrorWithResponse,
+  useInspection,
+  useUpdateInspectionStatus,
+} from "@/hooks/useApi";
+import {
+  ArrowLeft,
+  Edit,
+  CheckCircle,
+  XCircle,
   Clock,
   Calendar,
   User,
-  Car
-} from 'lucide-react';
+  Car,
+} from "lucide-react";
 
 const statusLabels = {
-  pending: 'Pendente',
-  approved: 'Aprovado',
-  rejected: 'Reprovado',
+  PENDENTE: "Pendente",
+  EM_ANDAMENTO: "Em Andamento",
+  APROVADA: "Aprovada",
+  REPROVADA: "Reprovada",
+  CANCELADA: "Cancelada",
 };
 
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  PENDENTE: "bg-yellow-100 text-yellow-800",
+  EM_ANDAMENTO: "bg-blue-100 text-blue-800",
+  APROVADA: "bg-green-100 text-green-800",
+  REPROVADA: "bg-red-100 text-red-800",
+  CANCELADA: "bg-gray-100 text-gray-800",
 };
 
 const statusIcons = {
-  pending: Clock,
-  approved: CheckCircle,
-  rejected: XCircle,
+  PENDENTE: Clock,
+  EM_ANDAMENTO: Clock,
+  APROVADA: CheckCircle,
+  REPROVADA: XCircle,
+  CANCELADA: XCircle,
 };
 
 const itemStatusLabels = {
-  approved: 'Aprovado',
-  rejected: 'Reprovado',
-  na: 'N/A',
+  APROVADO: "Aprovado",
+  REPROVADO: "Reprovado",
+  NAO_APLICAVEL: "N/A",
 };
 
 const itemStatusColors = {
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  na: 'bg-gray-100 text-gray-800',
+  APROVADO: "bg-green-100 text-green-800",
+  REPROVADO: "bg-red-100 text-red-800",
+  NAO_APLICAVEL: "bg-gray-100 text-gray-800",
 };
 
 const itemStatusIcons = {
-  approved: CheckCircle,
-  rejected: XCircle,
-  na: Clock,
+  APROVADO: CheckCircle,
+  REPROVADO: XCircle,
+  NAO_APLICAVEL: Clock,
 };
 
 export default function VistoriaDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const inspectionId = params.id as string;
 
   const { data: inspection, isLoading, error } = useInspection(inspectionId);
   const updateStatusMutation = useUpdateInspectionStatus();
 
-  const handleStatusChange = async (status: 'pending' | 'approved' | 'rejected') => {
+  const handleStatusChange = async (
+    status: "PENDENTE" | "EM_ANDAMENTO" | "APROVADA" | "REPROVADA" | "CANCELADA"
+  ) => {
     try {
       await updateStatusMutation.mutateAsync({ id: inspectionId, status });
+      // Recarregar a página para mostrar o novo status
+      window.location.reload();
     } catch (err) {
-      console.error('Erro ao atualizar status:', err);
+      const error = err as ErrorWithResponse;
+      console.error("Erro ao atualizar status:", error);
+      // O erro será exibido automaticamente pelo componente devido ao updateStatusMutation.error
     }
   };
 
@@ -107,8 +122,10 @@ export default function VistoriaDetailPage() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Vistoria #{inspection.id.slice(-8)}</h1>
-              <p className="text-gray-600">Detalhes da inspeção veicular</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {inspection.titulo}
+              </h1>
+              <p className="text-gray-600">#{inspection.id.slice(-8)}</p>
             </div>
           </div>
           <Link href={`/vistorias/${inspection.id}/edit`}>
@@ -129,9 +146,13 @@ export default function VistoriaDetailPage() {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600">Status</p>
-                  <p className={`text-lg font-bold ${statusColors[inspection.status]}`}>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                      statusColors[inspection.status]
+                    }`}
+                  >
                     {statusLabels[inspection.status]}
-                  </p>
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -144,9 +165,11 @@ export default function VistoriaDetailPage() {
                   <Calendar className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-600">Data</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Data de Criação
+                  </p>
                   <p className="text-lg font-bold text-gray-900">
-                    {new Date(inspection.createdAt).toLocaleDateString('pt-BR')}
+                    {new Date(inspection.createdAt).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
               </div>
@@ -170,6 +193,18 @@ export default function VistoriaDetailPage() {
           </Card>
         </div>
 
+        {/* Descrição */}
+        {inspection.descricao && (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Descrição
+              </h3>
+              <p className="text-gray-700">{inspection.descricao}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Informações do Veículo */}
         <Card>
           <CardContent className="p-6">
@@ -180,7 +215,7 @@ export default function VistoriaDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <span className="text-gray-600">Nome:</span>
-                <p className="font-medium">{inspection.vehicle.nome || '-'}</p>
+                <p className="font-medium">{inspection.vehicle.nome || "-"}</p>
               </div>
               <div>
                 <span className="text-gray-600">Placa:</span>
@@ -200,7 +235,9 @@ export default function VistoriaDetailPage() {
               </div>
               <div>
                 <span className="text-gray-600">Proprietário:</span>
-                <p className="font-medium">{inspection.vehicle.proprietario || '-'}</p>
+                <p className="font-medium">
+                  {inspection.vehicle.proprietario || "-"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -209,24 +246,32 @@ export default function VistoriaDetailPage() {
         {/* Checklist */}
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Checklist de Vistoria</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Checklist de Vistoria
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inspection.items.map((item, index) => {
+              {inspection.checklistItems.map((item, index) => {
                 const ItemIcon = itemStatusIcons[item.status];
                 return (
-                  <div
-                    key={index}
-                    className={`p-4 border rounded-lg ${itemStatusColors[item.status]}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{item.name}</span>
+                  <div key={index} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{item.key}</span>
                       <div className="flex items-center">
                         <ItemIcon className="h-4 w-4 mr-1" />
-                        <span className="text-sm font-medium">
+                        <span
+                          className={`text-sm font-medium px-2 py-1 rounded-full ${
+                            itemStatusColors[item.status]
+                          }`}
+                        >
                           {itemStatusLabels[item.status]}
                         </span>
                       </div>
                     </div>
+                    {item.comment && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        {item.comment}
+                      </p>
+                    )}
                   </div>
                 );
               })}
@@ -235,41 +280,119 @@ export default function VistoriaDetailPage() {
         </Card>
 
         {/* Observações */}
-        {inspection.observations && (
+        {inspection.observacoes && (
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Observações</h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{inspection.observations}</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Observações
+              </h3>
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {inspection.observacoes}
+              </p>
             </CardContent>
           </Card>
         )}
 
         {/* Ações de Status */}
-        {inspection.status === 'pending' && (
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Alterar Status</h3>
-              <div className="flex space-x-4">
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Alterar Status
+            </h3>
+            <div className="flex flex-wrap gap-4">
+              {inspection.status === "PENDENTE" && (
+                <>
+                  <Button
+                    onClick={() => handleStatusChange("EM_ANDAMENTO")}
+                    loading={updateStatusMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Iniciar Vistoria
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange("APROVADA")}
+                    loading={updateStatusMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprovar Vistoria
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange("REPROVADA")}
+                    loading={updateStatusMutation.isPending}
+                    variant="danger"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reprovar Vistoria
+                  </Button>
+                </>
+              )}
+
+              {inspection.status === "EM_ANDAMENTO" && (
+                <>
+                  <Button
+                    onClick={() => handleStatusChange("APROVADA")}
+                    loading={updateStatusMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprovar Vistoria
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange("REPROVADA")}
+                    loading={updateStatusMutation.isPending}
+                    variant="danger"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reprovar Vistoria
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange("PENDENTE")}
+                    loading={updateStatusMutation.isPending}
+                    variant="outline"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Voltar para Pendente
+                  </Button>
+                </>
+              )}
+
+              {(inspection.status === "APROVADA" ||
+                inspection.status === "REPROVADA") && (
                 <Button
-                  onClick={() => handleStatusChange('approved')}
+                  onClick={() => handleStatusChange("EM_ANDAMENTO")}
                   loading={updateStatusMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Aprovar Vistoria
+                  <Clock className="h-4 w-4 mr-2" />
+                  Reabrir Vistoria
                 </Button>
+              )}
+
+              {inspection.status !== "CANCELADA" && (
                 <Button
-                  onClick={() => handleStatusChange('rejected')}
+                  onClick={() => handleStatusChange("CANCELADA")}
                   loading={updateStatusMutation.isPending}
-                  variant="danger"
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
-                  Reprovar Vistoria
+                  Cancelar Vistoria
                 </Button>
+              )}
+            </div>
+
+            {/* Exibir erro se houver */}
+            {updateStatusMutation.error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">
+                  Erro ao atualizar status: {updateStatusMutation.error}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );

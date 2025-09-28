@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sistema de Vistorias",
-  description: "Sistema de gestão de vistorias veiculares",
+  title: "Sistema de Vistorias EPTA",
+  description: "Sistema de gestão de vistorias veiculares EPTA. Criado por Herbert Kayky",
 };
 
 export default function RootLayout({

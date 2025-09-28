@@ -30,10 +30,17 @@ export interface Vehicle {
   placa: string;
   modelo: string;
   marca: string;
-  ano: string;
+  ano: number;
   proprietario: string;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    vistorias: number;
+  };
+}
+
+export interface VehicleWithVistorias extends Vehicle {
+  vistorias: Vistoria[];
 }
 
 export interface CreateVehicleRequest {
@@ -41,50 +48,69 @@ export interface CreateVehicleRequest {
   placa: string;
   modelo: string;
   marca: string;
-  ano: string;
+  ano: number;
   proprietario: string;
 }
 
-// Tipos de inspeções/vistorias
-export interface InspectionItem {
-  id: string;
-  name: string;
-  status: 'approved' | 'rejected' | 'na';
+// Tipos de vistorias/inspeções (corrigidos para corresponder ao backend)
+export interface ChecklistItem {
+  id?: string;
+  key: string;
+  status: "APROVADO" | "REPROVADO" | "NAO_APLICAVEL";
+  comment?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface Inspection {
+export interface Vistoria {
   id: string;
-  vehicleId: string;
-  vehicle: Vehicle;
+  titulo: string;
+  descricao?: string;
+  status: "PENDENTE" | "EM_ANDAMENTO" | "APROVADA" | "REPROVADA" | "CANCELADA";
+  dataInicio: string;
+  dataFim?: string;
+  tempoGasto?: number; // em minutos
+  observacoes?: string;
   inspectorId: string;
   inspector: User;
-  status: 'pending' | 'approved' | 'rejected';
-  observations?: string;
-  items: InspectionItem[];
+  vehicleId: string;
+  vehicle: Vehicle;
+  checklistItems: ChecklistItem[];
   createdAt: string;
   updatedAt: string;
 }
 
+// Alias para manter compatibilidade
+export type Inspection = Vistoria;
+export type InspectionItem = ChecklistItem;
+
 export interface CreateInspectionRequest {
+  titulo: string;
+  descricao?: string;
   vehicleId: string;
-  observations?: string;
+  inspectorId: string;
   items: {
-    name: string;
-    status: 'approved' | 'rejected' | 'na';
+    key: string;
+    status: "APROVADO" | "REPROVADO" | "NAO_APLICAVEL";
+    comment?: string;
   }[];
 }
 
 export interface UpdateInspectionRequest {
-  observations?: string;
-  items: {
-    name: string;
-    status: 'approved' | 'rejected' | 'na';
+  titulo?: string;
+  descricao?: string;
+  observacoes?: string;
+  items?: {
+    key: string;
+    status: "APROVADO" | "REPROVADO" | "NAO_APLICAVEL";
+    comment?: string;
   }[];
 }
 
 // Tipos de filtros
 export interface InspectionFilters {
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: "PENDENTE" | "EM_ANDAMENTO" | "APROVADA" | "REPROVADA" | "CANCELADA";
+  inspectorId?: string;
   from?: string;
   to?: string;
   search?: string;
@@ -94,11 +120,11 @@ export interface InspectionFilters {
 
 // Tipos de relatórios
 export interface ReportOverview {
-  totalInspections: number;
-  approvedInspections: number;
-  rejectedInspections: number;
-  pendingInspections: number;
-  period: {
+  total: number;
+  aprovadas: number;
+  reprovadas: number;
+  tempoMedio: number; // em minutos
+  periodo: {
     from: string;
     to: string;
   };
@@ -107,10 +133,125 @@ export interface ReportOverview {
 export interface InspectorReport {
   inspectorId: string;
   inspectorName: string;
+  email: string;
   totalInspections: number;
   approvedInspections: number;
   rejectedInspections: number;
-  approvalRate: number;
+  averageTimeSpent: number; // em minutos
+  statusCounts: {
+    PENDENTE: number;
+    EM_ANDAMENTO: number;
+    APROVADA: number;
+    REPROVADA: number;
+    CANCELADA: number;
+  };
+  approvalRate?: number; // calculado opcionalmente
+}
+
+// Novos tipos para relatórios detalhados
+export interface DetailedInspectionReport {
+  id: string;
+  titulo: string;
+  status: "PENDENTE" | "EM_ANDAMENTO" | "APROVADA" | "REPROVADA" | "CANCELADA";
+  dataInicio: string;
+  dataFim?: string;
+  tempoGasto?: number;
+  observacoes?: string;
+  veiculo: {
+    nome: string;
+    placa: string;
+    marca: string;
+    modelo: string;
+    ano: number;
+    proprietario: string;
+  };
+  inspector: {
+    nome: string;
+    email: string;
+  };
+  checklist: {
+    totalItens: number;
+    itensAprovados: number;
+    itensReprovados: number;
+    itensNaoAplicaveis: number;
+  };
+}
+
+export interface DetailedInspectorReport {
+  id: string;
+  nome: string;
+  email: string;
+  totalVistorias: number;
+  aprovadas: number;
+  reprovadas: number;
+  pendentes: number;
+  emAndamento: number;
+  canceladas: number;
+  tempoMedio: number;
+  taxaAprovacao: number;
+}
+
+export interface BrandReport {
+  marca: string;
+  totalVistorias: number;
+  aprovadas: number;
+  reprovadas: number;
+  taxaAprovacao: number;
+  tempoMedio: number;
+}
+
+export interface ProblemReport {
+  item: string;
+  totalReprovacoes: number;
+  percentualReprovacao: number;
+  marcasAfetadas: string[];
+  exemplos: {
+    vistoriaId: string;
+    veiculo: string;
+    placa: string;
+    comentario: string;
+  }[];
+}
+
+// Tipos de resposta das novas APIs
+export interface DetailedInspectionsResponse {
+  success: boolean;
+  data: {
+    periodo: {
+      from: string;
+      to: string;
+    };
+    total: number;
+    vistorias: DetailedInspectionReport[];
+  };
+  message: string;
+}
+
+export interface DetailedInspectorsResponse {
+  success: boolean;
+  data: {
+    total: number;
+    inspetores: DetailedInspectorReport[];
+  };
+  message: string;
+}
+
+export interface BrandsReportResponse {
+  success: boolean;
+  data: {
+    total: number;
+    marcas: BrandReport[];
+  };
+  message: string;
+}
+
+export interface ProblemsReportResponse {
+  success: boolean;
+  data: {
+    total: number;
+    problemas: ProblemReport[];
+  };
+  message: string;
 }
 
 // Tipos de resposta da API
